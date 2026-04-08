@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Novaristan – Serious Game v12</title>
+<style>
+  :root{
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --text:#1f2933;
+    --muted:#5b6b7a;
+    --line:#d8e0e8;
+    --blue:#0066cc;
+    --red:#cc0000;
+    --yellow:#ffcc00;
+    --green:#009900;
+    --gray:#aaaaaa;
+    --shadow:0 2px 10px rgba(0,0,0,.08);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:20px;
+    font-family:Arial, Helvetica, sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+  h1,h2,h3,h4{margin:0 0 10px 0}
+  h1{font-size:28px; text-align:center; margin-bottom:18px}
+  .topbar{
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:center;
+    margin-bottom:18px;
+  }
+  .pill{
+    background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 14px; box-shadow:var(--shadow); font-weight:700;
+  }
+  .layout{max-width:1700px; margin:0 auto; display:grid; gap:18px;}
+  .hero{display:grid; grid-template-columns:minmax(0,1.24fr) minmax(430px,.76fr); gap:18px; align-items:stretch; min-height:760px;}
+  .stack{display:grid; grid-template-rows:minmax(0,1fr) minmax(210px,.52fr); gap:18px; min-height:100%;}
+  .full-width{width:100%}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px;
+  }
+  .grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  }
+  .zone{
+    border:2px solid #2f2f2f; border-radius:10px; min-height:94px; padding:12px 10px;
+    font-size:14px; font-weight:700; text-align:center; cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease, outline .08s ease;
+    box-shadow:1px 1px 4px rgba(0,0,0,.14);
+  }
+  .zone:hover{transform:translateY(-1px)}
+  .zone.active{outline:4px solid #11111122}
+  .zone i{font-weight:400}
+  .gouvernement{background:var(--blue); color:#fff}
+  .rebelle{background:var(--red); color:#fff}
+  .civil{background:var(--yellow); color:#111}
+  .ong{background:var(--green); color:#fff}
+  .disputee{background:var(--gray); color:#111}
+
+  .legend{margin-top:14px; font-size:14px; line-height:1.6}
+  .legend-item{display:inline-block; margin-right:12px}
+  .dot{display:inline-block; width:12px; height:12px; border-radius:2px; border:1px solid #0003; vertical-align:middle; margin-right:5px}
+  .muted{color:var(--muted)}
+  .section{padding:0 0 14px 0; margin-bottom:14px; border-bottom:1px solid #e8edf2}
+  .section:last-child{border-bottom:none; margin-bottom:0; padding-bottom:0}
+  .tag{
+    display:inline-block; border:1px solid var(--line); background:#f7f9fb; padding:4px 8px; border-radius:999px;
+    font-size:12px; margin:0 6px 6px 0;
+  }
+  .state-badge{
+    display:inline-block; padding:6px 10px; border-radius:999px; font-size:14px; font-weight:700; border:1px solid #0002;
+  }
+  .controls{display:flex; flex-wrap:wrap; gap:8px}
+  button, select, input[type="number"], textarea{
+    font:inherit;
+  }
+  button{
+    border:1px solid #bfc9d3; background:#f3f5f7; border-radius:9px; padding:8px 12px; cursor:pointer;
+  }
+  button:hover{background:#e8edf2}
+  .btn-primary{background:#1f6feb; border-color:#1f6feb; color:#fff}
+  .btn-primary:hover{background:#175cc4}
+  .btn-danger{background:#b42318; border-color:#b42318; color:#fff}
+  .btn-danger:hover{background:#932018}
+  .btn-gouvernement{border-left:6px solid var(--blue)}
+  .btn-rebelle{border-left:6px solid var(--red)}
+  .btn-civil{border-left:6px solid #d5aa00}
+  .btn-ong{border-left:6px solid var(--green)}
+  .btn-disputee{border-left:6px solid #888}
+  .small{font-size:12px}
+  .deck-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+  .mini-card{
+    min-height:144px; perspective:1000px;
+  }
+  .flip{
+    position:relative; width:100%; min-height:144px; transform-style:preserve-3d; transition:transform .45s ease;
+  }
+  .flip.flipped{transform:rotateY(180deg)}
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border:1px solid var(--line); border-radius:12px; padding:12px; background:#fff;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .back{transform:rotateY(180deg)}
+  .face.event{background:linear-gradient(135deg,#fff7f7,#ffe9e9)}
+  .face.objective{background:linear-gradient(135deg,#f7fff7,#e9f8e9)}
+  .face.info{background:linear-gradient(135deg,#f8fbff,#eaf2ff)}
+  .face h4{font-size:16px}
+  .face .category{font-size:12px; font-weight:700; text-transform:uppercase; color:#4d5d6c}
+  .deck-meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .actions-list p{margin:6px 0}
+  .rule-box{
+    background:#f8fbff; border:1px solid #dbe7f5; border-radius:10px; padding:10px 12px; font-size:14px;
+  }
+  .turnboard{display:block}
+  .faction-card{
+    border:1px solid var(--line); border-radius:12px; padding:12px; background:#fbfcfd;
+  }
+  .faction-card h4{font-size:15px; margin-bottom:8px}
+  .faction-card label{display:block; font-size:12px; margin:8px 0 4px 0; color:#455568}
+  .faction-card select, .faction-card textarea, .faction-card input{
+    width:100%; border:1px solid #c7d1db; border-radius:8px; padding:8px; background:#fff;
+  }
+  .faction-card select:focus, .faction-card textarea:focus, .faction-card input:focus{
+    outline:none; border-color:#1f6feb; box-shadow:0 0 0 3px rgba(31,111,235,.14);
+  }
+  .dice-row{
+    display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end; margin-top:6px;
+  }
+  .dice-actions button{
+    min-width:132px; padding:10px 14px; font-weight:700; background:#eef4ff; border-color:#b9cdf7; color:#174ea6; box-shadow:0 1px 2px rgba(0,0,0,.05);
+  }
+  .dice-actions button:hover{background:#e1edff}
+  .dice-actions button[disabled]{opacity:.5; cursor:not-allowed; box-shadow:none; background:#f2f4f8; color:#7b8794; border-color:#d8dee9}
+  .readonly-die{background:#f7f9fc; font-weight:700; text-align:center}
+  .neutral{background:#f6f8fa; border-color:#d9e0e8; color:#52606d}
+  .result-box{
+    margin-top:10px; padding:11px 12px; border-radius:10px; background:#fff; border:1px solid #e3e8ee; font-size:13px; line-height:1.35;
+  }
+  .success{background:#eefbf0; border-color:#b8e2c0}
+  .partial{background:#fff8e7; border-color:#f2d28f}
+  .fail{background:#fff0f0; border-color:#ebb0b0}
+  .pending{background:#f6f8fb; border-color:#d8e0e8; color:#52606d}
+  .log-entry{
+    border:1px solid var(--line); background:#fff; border-radius:12px; padding:12px; margin-bottom:12px;
+  }
+  .snapshot-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:8px; max-width:210px;
+  }
+  .snapshot-cell{
+    height:22px; border-radius:4px; border:1px solid #0002;
+  }
+  .toolbar{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  .hidden{display:none}
+
+  .card-header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px}
+  .card-header p{margin:0}
+  .map-card .grid{min-height:390px}
+  .map-card .zone{min-height:92px; font-size:15px}
+  .turn-card{position:static; height:100%; overflow:hidden; display:flex; flex-direction:column; min-height:0}
+  .turn-card .turnboard{overflow:auto; padding-right:4px; min-height:0; flex:1}
+  .turn-card .card-header{margin-bottom:8px}
+  #factionTabs{margin-bottom:10px}
+  #factionTabs .tab-btn{font-size:13px; padding:8px 10px}
+  .faction-toolbar{margin-bottom:8px}
+  .faction-summary{display:none}
+  .faction-card{padding:10px}
+  .result-box{font-size:12px; padding:9px 10px}
+  .info-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .compact-panels .mini-card{min-height:126px}
+  .compact-panels .flip{min-height:126px}
+  .compact-panels .toolbar button{padding:7px 10px}
+  .compact-panels .rule-box{font-size:13px}
+  .full-width{margin-top:0}
+  .full-width .card-header{margin-bottom:8px}
+  .compact-note{font-size:13px; color:var(--muted)}
+  .tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px}
+  .tab-btn{padding:9px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; font-weight:700}
+  .tab-btn.active{background:#1f6feb; color:#fff; border-color:#1f6feb}
+  .subtab-btn.active{background:#111827; color:#fff; border-color:#111827}
+  .tab-panel.hidden{display:none}
+  .faction-toolbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap}
+  .faction-summary{display:flex; flex-wrap:wrap; gap:8px}
+  .summary-chip{padding:6px 10px; border-radius:999px; background:#f4f7fa; border:1px solid var(--line); font-size:12px; font-weight:700}
+  .turnboard .faction-card{max-width:none}
+  .info-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:14px}
+  .zone-panel-scroll{max-height:470px; overflow:auto; padding-right:4px}
+  .history-scroll{max-height:470px; overflow:auto; padding-right:4px}
+  .notes-panel textarea{min-height:220px}
+  .mini-split{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  
+  .zone-context-card{display:flex; flex-direction:column; min-height:220px}
+  .zone-context-body{overflow:auto; min-height:0; padding-right:4px}
+  .turn-card .tabs{margin-bottom:8px}
+  .action-tabs{display:flex; gap:8px; flex-wrap:wrap; margin:4px 0 12px 0}
+  .action-tab-btn{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; font-weight:700}
+  .action-tab-btn.active{background:#111827; color:#fff; border-color:#111827}
+  .turn-card .faction-card{display:flex; flex-direction:column; gap:8px}
+  .turn-summary{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px}
+  .turn-summary .summary-chip{display:block; text-align:center}
+  .action-panel{border-top:1px solid #e8edf2; padding-top:10px}
+  .contextual-grid{display:grid; grid-template-columns:1fr; gap:14px}
+
+  .resolution-grid{display:grid; grid-template-columns:1fr; gap:10px; margin-top:8px}
+  .resolution-box{border:1px solid var(--line); border-radius:10px; background:#f9fbfd; padding:10px}
+  .resolution-box .small{display:block; margin-top:6px}
+  .mode-select-row{display:grid; grid-template-columns:1fr; gap:8px}
+  .compact-result{margin-top:8px}
+  .qual-select{margin-top:6px}
+
+
+  @media (max-width:1280px){
+    .hero,.info-grid{grid-template-columns:1fr}
+    .stack{grid-template-rows:auto auto}
+    .turn-card{height:auto; max-height:none}
+    .turn-card .turnboard{overflow:visible; max-height:none}
+  }
+  @media (max-width:760px){
+    .deck-grid,.two-col,.mini-split{grid-template-columns:1fr}
+    body{padding:14px}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<h1>Novaristan – Serious Game v12</h1>
+
+<div class="topbar">
+  <div class="pill">Tour en cours : <span id="currentTurn">1</span> / 6</div>
+    <button class="btn-primary" onclick="finalizeTurn()">Clôturer le tour</button>
+  <button onclick="nextTurn()">Tour suivant</button>
+  <button onclick="saveToFile()">Exporter JSON</button>
+  <button onclick="document.getElementById('importFile').click()">Importer JSON</button>
+  <input id="importFile" type="file" accept=".json" class="hidden" onchange="importFromFile(event)">
+</div>
+
+<div class="layout">
+  <div class="hero">
+    <div class="stack">
+      <div class="card map-card">
+        <div class="card-header">
+          <div>
+            <h2>Carte opérationnelle</h2>
+            <p class="compact-note">Le théâtre d’opérations reste visible en permanence. Cliquez sur une zone pour afficher sa fiche détaillée juste en dessous.</p>
+          </div>
+          <div class="compact-note"><b>Vue partagée</b><br>contrôle territorial et axes clés</div>
+        </div>
+        <div class="grid" id="mapGrid"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="dot" style="background:#0066cc"></span> Gouvernement</div>
+          <div class="legend-item"><span class="dot" style="background:#cc0000"></span> Rebelles</div>
+          <div class="legend-item"><span class="dot" style="background:#ffcc00"></span> Civils</div>
+          <div class="legend-item"><span class="dot" style="background:#009900"></span> ONG</div>
+          <div class="legend-item"><span class="dot" style="background:#aaaaaa"></span> Zone disputée</div>
+          <div style="margin-top:8px">
+            <b>Routes stratégiques :</b><br>
+            - Militaire : A2 → B2 → D1<br>
+            - Humanitaire : C2 → B2 → D2<br>
+            - Rebelle : C1 → B1 → D3
+          </div>
+        </div>
+      </div>
+
+      <div class="card zone-context-card">
+        <div class="card-header">
+          <div>
+            <h2>Contexte de zone</h2>
+            <p class="compact-note">Fiche directement visible pour soutenir les décisions sans quitter la carte.</p>
+          </div>
+          <div class="compact-note"><b>Vue facilitateur</b><br>terrain, effets, modificateurs</div>
+        </div>
+        <div id="zonePanel" class="zone-context-body muted">Cliquez sur une zone pour afficher sa fiche détaillée.</div>
+      </div>
+    </div>
+
+    <div class="card turn-card">
+      <div class="card-header">
+        <div>
+          <h2>Interface de tour</h2>
+          <p class="compact-note">Chaque faction choisit 2 actions principales et peut disposer d’1 réaction libre maximum. Utilisez les onglets de faction puis les onglets Action 1 / Action 2 / Réaction. Résolution au choix : négociée, arbitrage ou D6.</p>
+        </div>
+        <div class="compact-note"><b>Vue facilitateur</b><br>sélection, résolution, arbitrage</div>
+      </div>
+      <div class="tabs" id="factionTabs"></div>
+      <div class="faction-toolbar">
+        <div class="compact-note"><b>Faction active :</b> utilisez les onglets ci-dessus pour passer aux ordres de chaque camp.</div>
+        <div class="faction-summary" id="factionSummary"></div>
+      </div>
+      <div class="turnboard" id="turnBoard"></div>
+    </div>
+  </div>
+
+  <div class="card full-width compact-panels">
+    <div class="tabs">
+      <button class="tab-btn subtab-btn" id="infoTabBtn-cards" onclick="setInfoTab('cards')">Cartes & objectifs</button>
+      <button class="tab-btn subtab-btn" id="infoTabBtn-notes" onclick="setInfoTab('notes')">Notes du tour</button>
+      <button class="tab-btn subtab-btn" id="infoTabBtn-history" onclick="setInfoTab('history')">Historique</button>
+    </div>
+
+    <div class="tab-panel" id="infoTab-cards">
+      <div class="info-grid">
+        <div>
+          <h2>Pioche et cartes en jeu</h2>
+          <div class="mini-split">
+            <div>
+              <h3>Événement du tour</h3>
+              <div class="mini-card" id="eventCardContainer"></div>
+              <div class="toolbar">
+                <button class="btn-primary" onclick="drawDeckCard('events')">Piocher événement</button>
+                <button onclick="flipCard('events')">Retourner</button>
+                <button onclick="discardVisible('events')">Défausser</button>
+                <button onclick="reshuffle('events')">Remélanger</button>
+              </div>
+              <div class="deck-meta small muted" id="eventsMeta"></div>
+            </div>
+            <div>
+              <h3>Objectif secret</h3>
+              <label class="small">Faction</label>
+              <select id="objectiveFactionSelect"></select>
+              <div class="mini-card" id="objectiveCardContainer" style="margin-top:8px"></div>
+              <div class="toolbar">
+                <button class="btn-primary" onclick="drawObjective()">Attribuer objectif</button>
+                <button onclick="flipCard('objectives')">Retourner</button>
+                <button onclick="discardVisible('objectives')">Défausser</button>
+                <button onclick="reshuffleObjectives()">Remélanger objectifs</button>
+              </div>
+              <div class="deck-meta small muted" id="objectivesMeta"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h2>Rappel rapide des règles</h2>
+          <div class="rule-box">
+            <b>Séquence d’un tour</b><br>
+            1. Tirer et appliquer 1 événement.<br>
+            2. Chaque faction choisit 2 actions principales.<br>
+            3. Réaction libre éventuelle (max. 1).<br>
+            4. Résoudre au D6 avec modificateurs si nécessaire.<br>
+            5. Clôturer le tour pour archiver l’état de jeu.
+          </div>
+          <div class="rule-box" style="margin-top:12px">
+            <b>Important</b><br>
+            Les objectifs secrets sont attribués par faction et ne sont pas publics.
+            Les actions sont choisies librement par chaque faction parmi leur répertoire.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel hidden notes-panel" id="infoTab-notes">
+      <h2>Notes opérationnelles du tour</h2>
+      <textarea id="turnNotes" rows="8" style="width:100%; border:1px solid #c7d1db; border-radius:10px; padding:10px" placeholder="Décisions majeures, incidents, arbitrages, annonces publiques, réactions notables..."></textarea>
+      <div class="toolbar">
+        <button onclick="saveLocalState()">Sauvegarder maintenant</button>
+        <button onclick="clearTurnSelections()">Réinitialiser les choix du tour</button>
+      </div>
+    </div>
+
+    <div class="tab-panel hidden" id="infoTab-history">
+      <h2>Historique opérationnel</h2>
+      <div id="historyPanel" class="history-scroll muted">Aucun tour clôturé pour l’instant.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_TURNS = 6;
+const states = ["gouvernement","rebelle","civil","ong","disputee"];
+const stateLabels = {
+  gouvernement:"Gouvernement",
+  rebelle:"Rebelles",
+  civil:"Civils",
+  ong:"ONG",
+  disputee:"Zone disputée"
+};
+
+const factions = [
+  {
+    id:"militaire",
+    name:"Commandement militaire",
+    actions:[
+      "Déployer une unité",
+      "Patrouille / contrôle de zone",
+      "Appui aérien",
+      "Coordination avec ONG ou civils",
+      "Arrestations ciblées / fouille",
+      "Sécurisation d’infrastructure"
+    ],
+    reaction:"Réaction militaire / redéploiement limité"
+  },
+  {
+    id:"rebelle",
+    name:"Faction rebelle",
+    actions:[
+      "Embuscade / sabotage",
+      "Mobilisation / propagande locale",
+      "Déplacement clandestin",
+      "Négociation souterraine",
+      "Manipulation informationnelle",
+      "Harcèlement ciblé"
+    ],
+    reaction:"Contre-mesure clandestine"
+  },
+  {
+    id:"civils",
+    name:"Acteurs civils locaux",
+    actions:[
+      "Médiation",
+      "Organisation de la sécurité locale",
+      "Alerte publique / déplacement de civils",
+      "Requête officielle",
+      "Protection d’infrastructure civile",
+      "Coordination d’évacuation"
+    ],
+    reaction:"Réaction communautaire / alerte locale"
+  },
+  {
+    id:"ong",
+    name:"Organisation internationale",
+    actions:[
+      "Observation de zone / rapport",
+      "Alerte ou médiation",
+      "Soutien logistique humanitaire",
+      "Table ronde / médiation formelle",
+      "Documentation d’incident",
+      "Protection civile coordonnée"
+    ],
+    reaction:"Intervention humanitaire urgente"
+  },
+  {
+    id:"presse",
+    name:"Presse indépendante",
+    actions:[
+      "Reportage de terrain",
+      "Interview officielle",
+      "Publication / bulletin spécial",
+      "Enquête sur abus présumés",
+      "Diffusion d’urgence",
+      "Vérification de version des faits"
+    ],
+    reaction:"Flash média / correctif public"
+  }
+];
+
+const zonesData = {
+  A1:{title:"A1 - Varkhan", terrain:"Montagnes", description:"Zone montagneuse servant de base arrière à la faction rebelle.", tags:["terrain difficile","infiltration","sanctuaire"], strategic:["route clandestine"], actions:{militaire:"Surveillance des voies de passage et reconnaissance de terrain.", rebelle:"Organisation de la logistique clandestine et embuscades.", civil:"Évacuations ponctuelles ou médiations locales.", ong:"Observation difficile, accès limité.", presse:"Reportage sur zones interdites (risque élevé)."}},
+  A2:{title:"A2 - Brisen", terrain:"Urbain", description:"Ville de Brisen, contrôle gouvernemental, point d’entrée de la route militaire.", tags:["urbain","logistique","administration"], strategic:["axe militaire"], actions:{militaire:"Contrôle logistique, renforcement du poste avancé.", rebelle:"Infiltration ou sabotage urbain.", civil:"Appels à la neutralité ou soutien au pouvoir local.", ong:"Négociation d’accès à l’arrière-pays.", presse:"Interview des autorités locales."}},
+  A3:{title:"A3 - Laksur", terrain:"Rural", description:"Plaine de Laksur, zone contestée entre factions.", tags:["ouvert","pression croisée"], strategic:["zone tampon"], actions:{militaire:"Patrouilles de sécurité et reconnaissance.", rebelle:"Recrutement local ou pose d’engins explosifs improvisés.", civil:"Rassemblement communautaire pour appui.", ong:"Accès médical ou sanitaire difficile.", presse:"Couvrir les tensions liées au contrôle incertain."}},
+  B1:{title:"B1 - Dera", terrain:"Camp civils", description:"Camp de réfugiés civils sous surveillance humanitaire.", tags:["humanitaire","fragile","population déplacée"], strategic:["camp réfugiés"], actions:{militaire:"Protection ponctuelle du camp ou escortes humanitaires.", rebelle:"Tentatives de propagande ou d’infiltration.", civil:"Organisation de la vie dans le camp.", ong:"Coordination de l’aide, gestion sanitaire.", presse:"Documentation des conditions de vie des déplacés."}},
+  B2:{title:"B2 - Novar", terrain:"Capitale", description:"Capitale Novar : centre administratif et stratégique.", tags:["politique","symbolique","commandement"], strategic:["capitale","centre administratif"], actions:{militaire:"Déploiement de troupes, centre de commandement.", rebelle:"Attentats ciblés ou propagande en ville.", civil:"Plaidoyer pour la sécurité ou la médiation.", ong:"Coordination des missions humanitaires.", presse:"Conférences officielles et diffusion d’informations."}},
+  B3:{title:"B3 - Karesh", terrain:"Industriel", description:"Zone industrielle contrôlée par les rebelles.", tags:["industriel","ressources","sabotage"], strategic:["infrastructure"], actions:{militaire:"Tentative de reconquête stratégique.", rebelle:"Exploitation industrielle ou propagande locale.", civil:"Travail sous surveillance, peur de représailles.", ong:"Appui discret à la population civile.", presse:"Risques élevés pour accéder à cette zone."}},
+  C1:{title:"C1 - Marivan", terrain:"Forêt", description:"Forêt dense utilisée pour les mouvements clandestins.", tags:["couvert","embuscade","opacité"], strategic:["sanctuaire rebelle"], actions:{militaire:"Missions spéciales ou raids ponctuels.", rebelle:"Forte implantation et embuscades fréquentes.", civil:"Présence limitée, communication via intermédiaires.", ong:"Accès quasi impossible.", presse:"Zone noire – accès interdit."}},
+  C2:{title:"C2 - Sirkhane", terrain:"Rural", description:"Région rurale relativement stable sous autorité civile.", tags:["stabilité relative","terrain ouvert"], strategic:["route humanitaire"], actions:{militaire:"Patrouille de dissuasion, surveillance discrète.", rebelle:"Menaces envers les notables locaux.", civil:"Tentative de neutralité, risque de pression multiple.", ong:"Déploiement médical ou éducatif.", presse:"Observation de l’équilibre fragile rural."}},
+  C3:{title:"C3 - Frontière Sud", terrain:"Zone rebelle", description:"Zone frontalière propice aux infiltrations rebelles.", tags:["frontière","infiltration","flux"], strategic:["passage frontalier"], actions:{militaire:"Fermeture de frontière ou surveillance renforcée.", rebelle:"Infiltrations et transits clandestins.", civil:"Contrebande ou exils vers les pays voisins.", ong:"Appui logistique ou soutien aux réfugiés.", presse:"Témoignages d’exfiltrés ou de familles déplacées."}},
+  D1:{title:"D1 - Giran", terrain:"Aéroport", description:"Aéroport stratégique de Giran sous contrôle gouvernemental et ONG.", tags:["aéroport","évacuation","projection"], strategic:["infrastructure stratégique"], actions:{militaire:"Protection du couloir aérien.", rebelle:"Tentative de blocage ou sabotage.", civil:"Appels à l’aide ou à l’évacuation.", ong:"Opérations de secours ou de transport.", presse:"Reportage sur l’arrivée de matériel."}},
+  D2:{title:"D2 - Kirali", terrain:"Port", description:"Port humanitaire de Kirali, point clé de la route d’aide.", tags:["port","logistique","aide"], strategic:["port humanitaire"], actions:{militaire:"Appui logistique aux convois humanitaires.", rebelle:"Blocus potentiel ou attaques d’approvisionnement.", civil:"Espoir d’aide internationale.", ong:"Coordination des entrées de matériel humanitaire.", presse:"Communication humanitaire, présence d’ONG."}},
+  D3:{title:"D3 - Karadjan", terrain:"Zone disputée", description:"Karadjan : zone grise très instable, théâtre de tensions multiples.", tags:["instable","friction","ambigu"], strategic:["zone grise"], actions:{militaire:"Reconnaissance tactique, zone dangereuse.", rebelle:"Campement temporaire, propagande agressive.", civil:"Soumis à deux autorités rivales.", ong:"Intervention ponctuelle sous haute protection.", presse:"Investigation sur violations présumées."}}
+};
+
+const initialZoneStates = {
+  A1:"rebelle", A2:"gouvernement", A3:"disputee",
+  B1:"civil", B2:"gouvernement", B3:"rebelle",
+  C1:"rebelle", C2:"civil", C3:"rebelle",
+  D1:"ong", D2:"civil", D3:"disputee"
+};
+
+const eventDeckSource = [
+  {id:"EV1", title:"Événement #1", effect:"Une tempête empêche les déplacements terrestres pour un tour. Interrompt les mouvements au sol.", category:"Mobilité"},
+  {id:"EV2", title:"Événement #2", effect:"Des journalistes internationaux arrivent dans la zone. Augmente l’attention médiatique.", category:"Médias"},
+  {id:"EV3", title:"Événement #3", effect:"Une explosion frappe un marché local : attribution incertaine. Provoque un débat sur les responsabilités.", category:"Incident"},
+  {id:"EV4", title:"Événement #4", effect:"Un convoi humanitaire est bloqué à un checkpoint. Entrave l’aide humanitaire.", category:"Humanitaire"},
+  {id:"EV5", title:"Événement #5", effect:"Un drone est abattu : les factions s’accusent mutuellement. Perturbe les opérations militaires.", category:"Militaire"},
+  {id:"EV6", title:"Événement #6", effect:"La rumeur d’un accord secret entre factions circule. Semble indiquer une trahison possible.", category:"Politique"},
+  {id:"EV7", title:"Événement #7", effect:"L’ONU menace de sanctions si les violences continuent. Force une désescalade temporaire.", category:"International"},
+  {id:"EV8", title:"Événement #8", effect:"Une épidémie se déclare dans un camp de réfugiés. Nécessite une réponse humanitaire rapide.", category:"Sanitaire"}
+];
+
+const objectivesByFactionSource = {
+  militaire:[
+    {id:"MIL-1", title:"Tenir l’axe central", effect:"Assurer à la fin de la partie le contrôle gouvernemental d’au moins 2 des 3 zones A2, B2 et D1."},
+    {id:"MIL-2", title:"Protection d’infrastructure", effect:"Maintenir D1 ou D2 hors contrôle rebelle pendant 3 tours cumulés."},
+    {id:"MIL-3", title:"Stabilité sous contrainte", effect:"Sécuriser au moins 3 zones sans provoquer d’incident majeur contre civils, ONG ou presse."},
+    {id:"MIL-4", title:"Reconquête ciblée", effect:"Faire passer au moins une zone rebelle initiale à gouvernement ou disputée, puis la tenir un tour complet."}
+  ],
+  rebelle:[
+    {id:"REB-1", title:"Éroder l’État", effect:"Faire basculer au moins 2 zones non rebelles initiales vers disputée ou rebelle."},
+    {id:"REB-2", title:"Sabotage structurant", effect:"Perturber une infrastructure clé et empêcher sa normalisation immédiate."},
+    {id:"REB-3", title:"Narratif insurgé", effect:"Imposer au moins une fois une version des faits favorable à votre cause dans le débat public."},
+    {id:"REB-4", title:"Profondeur périphérique", effect:"Conserver le contrôle de 3 zones périphériques ou forestières/frontalières à la fin de la partie."}
+  ],
+  civils:[
+    {id:"CIV-1", title:"Services vitaux", effect:"Préserver au moins 2 espaces civils fonctionnels ou protégés jusqu’à la fin de la partie."},
+    {id:"CIV-2", title:"Éviter l’embrasement", effect:"Obtenir ou contribuer à au moins une désescalade, médiation ou cessez-le-feu local."},
+    {id:"CIV-3", title:"Neutralité utile", effect:"Maintenir une capacité de dialogue avec au moins 3 autres factions sans perte totale de légitimité."},
+    {id:"CIV-4", title:"Protection des déplacés", effect:"Empêcher une dégradation durable du camp B1 ou obtenir une amélioration humanitaire notable."}
+  ],
+  ong:[
+    {id:"ONG-1", title:"Accès humanitaire", effect:"Assurer un accès opérationnel à au moins 2 zones sensibles au cours de la partie."},
+    {id:"ONG-2", title:"Crédibilité internationale", effect:"Produire ou soutenir au moins 2 rapports/alertes reconnus comme crédibles."},
+    {id:"ONG-3", title:"Neutralité active", effect:"Aider des civils ou zones critiques sans être durablement identifiée comme alignée sur une faction."},
+    {id:"ONG-4", title:"Protection préventive", effect:"Limiter au moins une crise humanitaire majeure avant qu’elle ne dégénère."}
+  ],
+  presse:[
+    {id:"PRS-1", title:"Couverture déterminante", effect:"Couvrir au moins 3 événements ou zones majeures au cours de la partie."},
+    {id:"PRS-2", title:"Révélation sensible", effect:"Mettre en lumière au moins un abus, mensonge ou fait caché ayant un impact sur les acteurs."},
+    {id:"PRS-3", title:"Accès difficile", effect:"Obtenir un accès ou témoignage sur une zone à haut risque ou fortement contrôlée."},
+    {id:"PRS-4", title:"Agenda médiatique", effect:"Faire dominer une narration ou un thème public pendant au moins un tour clé."}
+  ]
+};
+
+let state = {
+  turn:1,
+  selectedZone:null,
+  ui:{activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'},
+  zones:{...initialZoneStates},
+  decks:{
+    events:{draw:[], discard:[], visible:null, flipped:false}
+  },
+  objectives:{
+    byFaction:{},
+    visible:null,
+    flipped:false
+  },
+  turnSelections:{},
+  notes:"",
+  history:[]
+};
+
+function shuffle(array){
+  const arr = [...array];
+  for(let i = arr.length-1; i>0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function initState(){
+  state.decks.events.draw = shuffle(eventDeckSource);
+  state.decks.events.discard = [];
+  state.decks.events.visible = null;
+  state.decks.events.flipped = false;
+
+  const byFaction = {};
+  Object.entries(objectivesByFactionSource).forEach(([f, arr]) => {
+    byFaction[f] = {draw:shuffle(arr), discard:[]};
+  });
+  state.objectives.byFaction = byFaction;
+  state.objectives.visible = null;
+  state.objectives.flipped = false;
+
+  state.turnSelections = {};
+  factions.forEach(f => {
+    state.turnSelections[f.id] = {
+      action1:"",
+      zone1:"",
+      resMode_1:"dice",
+      qual_1:"",
+      d6_1:null,
+      mod_1:0,
+      rolled_1:false,
+      action2:"",
+      zone2:"",
+      resMode_2:"dice",
+      qual_2:"",
+      d6_2:null,
+      mod_2:0,
+      rolled_2:false,
+      reaction:"",
+      zoneR:"",
+      resMode_r:"dice",
+      qual_r:"",
+      d6_r:null,
+      mod_r:0,
+      rolled_r:false,
+      notes:""
+    };
+  });
+}
+
+function getCurrentState(zoneId){ return state.zones[zoneId]; }
+
+function stateBadge(stateKey){
+  const bg = {gouvernement:"#0066cc",rebelle:"#cc0000",civil:"#ffcc00",ong:"#009900",disputee:"#aaaaaa"}[stateKey] || "#ddd";
+  const color = (stateKey==="civil" || stateKey==="disputee") ? "#111":"#fff";
+  return `<span class="state-badge" style="background:${bg};color:${color}">${stateLabels[stateKey] || stateKey}</span>`;
+}
+
+function zoneContextModifiers(zoneId, controller){
+  const zone = zonesData[zoneId];
+  const mods = [];
+  if(zone.terrain === "Montagnes" || zone.terrain === "Forêt") mods.push("Terrain difficile : mobilité terrestre et projection plus complexes.");
+  if(zone.terrain === "Urbain") mods.push("Milieu urbain : infiltration, désinformation et friction civile accrues.");
+  if(controller === "gouvernement"){
+    mods.push("Contrôle gouvernemental : sécurisation / coordination officielle favorisées ; infiltration rebelle plus difficile.");
+  } else if(controller === "rebelle"){
+    mods.push("Contrôle rebelle : sabotage, dissimulation et intimidation facilités ; présence institutionnelle plus risquée.");
+  } else if(controller === "civil"){
+    mods.push("Contrôle civil : médiation, légitimité locale et protection communautaire favorisées ; action coercitive politiquement sensible.");
+  } else if(controller === "ong"){
+    mods.push("Présence ONG : visibilité internationale accrue ; usages offensifs politiquement coûteux.");
+  } else if(controller === "disputee"){
+    mods.push("Zone disputée : situation volatile ; succès partiels et incidents plus probables.");
+  }
+  if(zone.tags.includes("humanitaire") || zone.strategic.some(s=>s.includes("camp") || s.includes("port"))) mods.push("Sensibilité humanitaire : impact médiatique et politique accru en cas d’incident.");
+  return mods;
+}
+
+function renderMap(){
+  const container = document.getElementById("mapGrid");
+  container.innerHTML = "";
+  Object.keys(zonesData).forEach(zoneId => {
+    const z = zonesData[zoneId];
+    const el = document.createElement("div");
+    el.id = zoneId;
+    el.className = `zone ${state.zones[zoneId]}${state.selectedZone===zoneId ? ' active':''}`;
+    el.innerHTML = `${z.title}<br><i>${z.terrain}</i>`;
+    el.onclick = () => showZone(zoneId);
+    container.appendChild(el);
+  });
+}
+
+function showZone(zoneId){
+  state.selectedZone = zoneId;
+  renderMap();
+  const z = zonesData[zoneId];
+  const controller = state.zones[zoneId];
+  const mods = zoneContextModifiers(zoneId, controller).map(m => `<li>${m}</li>`).join("");
+  const roleActions = Object.entries(z.actions).map(([role, txt]) => `<p><b>${role}</b> : ${txt}</p>`).join("");
+  const tags = [...z.tags, ...z.strategic].map(t => `<span class="tag">${t}</span>`).join("");
+  document.getElementById("zonePanel").innerHTML = `
+    <div class="section">
+      <h3>${z.title}</h3>
+      <p><b>Terrain :</b> ${z.terrain}</p>
+      <p><b>Contrôle actuel :</b> ${stateBadge(controller)}</p>
+      <div>${tags}</div>
+    </div>
+    <div class="section">
+      <h3>Contexte</h3>
+      <p>${z.description}</p>
+    </div>
+    <div class="section">
+      <h3>Actions plausibles par rôle</h3>
+      <div class="actions-list">${roleActions}</div>
+    </div>
+    <div class="section">
+      <h3>Modificateurs contextuels suggérés</h3>
+      <ul>${mods}</ul>
+    </div>
+    <div class="section">
+      <h3>Modifier le contrôle</h3>
+      <div class="controls">
+        <button class="btn-gouvernement" onclick="setZoneState('${zoneId}','gouvernement')">Gouvernement</button>
+        <button class="btn-rebelle" onclick="setZoneState('${zoneId}','rebelle')">Rebelles</button>
+        <button class="btn-civil" onclick="setZoneState('${zoneId}','civil')">Civils</button>
+        <button class="btn-ong" onclick="setZoneState('${zoneId}','ong')">ONG</button>
+        <button class="btn-disputee" onclick="setZoneState('${zoneId}','disputee')">Zone disputée</button>
+      </div>
+    </div>
+  `;
+  saveLocalState();
+}
+
+function setZoneState(zoneId, newState){
+  state.zones[zoneId] = newState;
+  showZone(zoneId);
+}
+
+function makeFlipCard(card, type, flipped, publicOnly=false){
+  if(!card){
+    return `<div class="flip"><div class="face info"><div><div class="category">${type}</div><h4>Aucune carte</h4><p class="muted">Aucune carte actuellement visible.</p></div><div class="small muted">Pioche non révélée</div></div></div>`;
+  }
+  const backText = type === "Objectif secret" && publicOnly
+    ? `<p><b>Code :</b> ${card.id}</p><p class="muted">Objectif attribué. Détail réservé au facilitateur / joueur concerné.</p>`
+    : `<p>${card.effect}</p>`;
+  return `
+    <div class="flip ${flipped ? 'flipped':''}">
+      <div class="face ${type==='Événement' ? 'event' : type==='Objectif secret' ? 'objective' : 'info'}">
+        <div>
+          <div class="category">${type}</div>
+          <h4>${card.title}</h4>
+          <p><b>ID :</b> ${card.id}</p>
+          ${card.factionName ? `<p><b>Faction :</b> ${card.factionName}</p>` : ``}
+        </div>
+        <div class="small muted">Cliquer sur “Retourner” pour voir le verso</div>
+      </div>
+      <div class="face back ${type==='Événement' ? 'event' : type==='Objectif secret' ? 'objective' : 'info'}">
+        <div>
+          <div class="category">Verso</div>
+          ${backText}
+        </div>
+        <div class="small muted">${type==='Objectif secret' && publicOnly ? 'Affichage public restreint' : 'Effet de carte'}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDecks(){
+  document.getElementById("eventCardContainer").innerHTML = makeFlipCard(state.decks.events.visible, "Événement", state.decks.events.flipped);
+  const objCard = state.objectives.visible ? {...state.objectives.visible, factionName:getFactionName(state.objectives.visible.faction)} : null;
+  document.getElementById("objectiveCardContainer").innerHTML = makeFlipCard(objCard, "Objectif secret", state.objectives.flipped, true);
+  document.getElementById("eventsMeta").innerHTML = `Pioche : ${state.decks.events.draw.length} | Défausse : ${state.decks.events.discard.length}`;
+  const selFaction = document.getElementById("objectiveFactionSelect").value || factions[0].id;
+  const fDeck = state.objectives.byFaction[selFaction];
+  document.getElementById("objectivesMeta").innerHTML = `Pioche (${getFactionName(selFaction)}) : ${fDeck.draw.length} | Défausse : ${fDeck.discard.length}`;
+}
+
+function drawDeckCard(deckName){
+  if(deckName !== 'events') return;
+  const deck = state.decks.events;
+  if(deck.draw.length === 0 && deck.discard.length > 0){
+    deck.draw = shuffle(deck.discard);
+    deck.discard = [];
+  }
+  if(deck.draw.length === 0){
+    alert("Aucune carte événement disponible.");
+    return;
+  }
+  deck.visible = deck.draw.pop();
+  deck.flipped = false;
+  renderDecks(); saveLocalState();
+}
+
+function drawObjective(){
+  const faction = document.getElementById("objectiveFactionSelect").value;
+  const deck = state.objectives.byFaction[faction];
+  if(deck.draw.length === 0 && deck.discard.length > 0){
+    deck.draw = shuffle(deck.discard);
+    deck.discard = [];
+  }
+  if(deck.draw.length === 0){
+    alert("Aucun objectif disponible pour cette faction.");
+    return;
+  }
+  const card = deck.draw.pop();
+  state.objectives.visible = {...card, faction};
+  state.objectives.flipped = false;
+  renderDecks(); saveLocalState();
+}
+
+function flipCard(which){
+  if(which==='events') state.decks.events.flipped = !state.decks.events.flipped;
+  if(which==='objectives') state.objectives.flipped = !state.objectives.flipped;
+  renderDecks(); saveLocalState();
+}
+
+function discardVisible(which){
+  if(which==='events' && state.decks.events.visible){
+    state.decks.events.discard.push(state.decks.events.visible);
+    state.decks.events.visible = null;
+    state.decks.events.flipped = false;
+  }
+  if(which==='objectives' && state.objectives.visible){
+    const fac = state.objectives.visible.faction;
+    state.objectives.byFaction[fac].discard.push({id:state.objectives.visible.id,title:state.objectives.visible.title,effect:state.objectives.visible.effect});
+    state.objectives.visible = null;
+    state.objectives.flipped = false;
+  }
+  renderDecks(); saveLocalState();
+}
+
+function reshuffle(which){
+  if(which==='events'){
+    state.decks.events.draw = shuffle([...state.decks.events.draw, ...state.decks.events.discard]);
+    state.decks.events.discard = [];
+    renderDecks(); saveLocalState();
+  }
+}
+function reshuffleObjectives(){
+  Object.keys(state.objectives.byFaction).forEach(f=>{
+    const d = state.objectives.byFaction[f];
+    d.draw = shuffle([...d.draw, ...d.discard]);
+    d.discard = [];
+  });
+  renderDecks(); saveLocalState();
+}
+
+function getFactionName(id){
+  const f = factions.find(x=>x.id===id);
+  return f ? f.name : id;
+}
+
+function setActiveFactionTab(factionId){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  state.ui.activeFaction = factionId;
+  renderFactionTabs();
+  renderTurnBoard();
+  saveLocalState();
+}
+
+function setInfoTab(tabId){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  state.ui.activeInfoTab = tabId;
+  renderInfoTabs();
+  saveLocalState();
+}
+
+function setActiveActionPanel(panelId){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  state.ui.activeActionPanel = panelId;
+  renderTurnBoard();
+  saveLocalState();
+}
+
+function renderFactionTabs(){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  const container = document.getElementById('factionTabs');
+  if(!container) return;
+  container.innerHTML = factions.map(f => `<button class="tab-btn ${state.ui.activeFaction===f.id?'active':''}" onclick="setActiveFactionTab('${f.id}')">${f.name}</button>`).join('');
+}
+
+function renderInfoTabs(){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  ['cards','notes','history'].forEach(tab => {
+    const btn = document.getElementById(`infoTabBtn-${tab}`);
+    const panel = document.getElementById(`infoTab-${tab}`);
+    if(btn) btn.classList.toggle('active', state.ui.activeInfoTab===tab);
+    if(panel) panel.classList.toggle('hidden', state.ui.activeInfoTab!==tab);
+  });
+}
+
+function factionStatusSummary(factionId){
+  const s = state.turnSelections[factionId];
+  let count = 0;
+  if(s.action1) count++;
+  if(s.action2) count++;
+  if(s.reaction) count++;
+  return count;
+}
+
+function renderFactionSummary(){
+  const wrap = document.getElementById('factionSummary');
+  if(!wrap) return;
+  wrap.innerHTML = factions.map(f => `<span class="summary-chip">${f.name} : ${factionStatusSummary(f.id)}/3 choix</span>`).join('');
+}
+
+
+
+
+function isActionMatch(actionName, patterns){
+  return patterns.some(rx => rx.test(actionName || ""));
+}
+
+function computeAutoModifier(factionId, actionName, zoneId){
+  let auto = 0;
+  const reasons = [];
+  const add = (value, reason) => {
+    if(!value) return;
+    auto += value;
+    reasons.push(`${value>0?'+':''}${value} ${reason}`);
+  };
+
+  if(!actionName){
+    return {auto:0, reasons:["Aucun modificateur automatique tant qu’aucune action n’est choisie."]};
+  }
+
+  const zone = zoneId ? zonesData[zoneId] : null;
+  const controller = zoneId ? state.zones[zoneId] : null;
+  const event = state.decks?.events?.visible || null;
+
+  const offensive = [/Appui aérien/i,/Embuscade/i,/sabotage/i,/Harcèlement/i,/Arrestations/i];
+  const mediation = [/Médiation/i,/Coordination/i,/Table ronde/i,/Alerte/i,/Requête/i,/Interview officielle/i];
+  const infoOps = [/propagande/i,/Manipulation/i,/Publication/i,/Diffusion/i,/Vérification/i,/Reportage/i,/Enquête/i,/Documentation/i,/rapport/i,/Observation/i];
+  const movement = [/Déployer/i,/Patrouille/i,/Déplacement clandestin/i,/Coordination d’évacuation/i,/Soutien logistique/i,/Reportage de terrain/i];
+  const protection = [/Sécurisation/i,/Protection/i,/Organisation de la sécurité locale/i,/Protection civile/i];
+
+  if(zone){
+    if(["Montagnes","Forêt","Zone rebelle"].includes(zone.terrain) && isActionMatch(actionName, movement.concat(offensive))){
+      add(-1, "terrain difficile");
+    }
+    if(zone.terrain === "Urbain" && isActionMatch(actionName, [/Manipulation/i,/Enquête/i,/Interview/i,/Arrestations/i,/propagande/i])){
+      add(+1, "milieu urbain propice à l’influence et au renseignement");
+    }
+    if(["Camp civils","Port","Aéroport","Capitale"].includes(zone.terrain) && isActionMatch(actionName, protection.concat(mediation))){
+      add(+1, "zone structurante favorable à la coordination");
+    }
+    if(zone.tags.includes("humanitaire") && isActionMatch(actionName, offensive)){
+      add(-1, "forte contrainte politico-humanitaire");
+    }
+
+    if(controller === "gouvernement"){
+      if(factionId === "militaire" && isActionMatch(actionName, [/Déployer/i,/Patrouille/i,/Sécurisation/i,/Arrestations/i,/Coordination/i])) add(+1, "présence institutionnelle établie");
+      if(factionId === "rebelle" && isActionMatch(actionName, [/Déplacement clandestin/i,/Embuscade/i,/sabotage/i,/Harcèlement/i,/Manipulation/i])) add(-1, "contrôle gouvernemental défavorable");
+      if(factionId === "presse" && isActionMatch(actionName, [/Interview officielle/i])) add(+1, "accès officiel facilité");
+    }
+    if(controller === "rebelle"){
+      if(factionId === "rebelle" && isActionMatch(actionName, [/Déplacement clandestin/i,/Embuscade/i,/sabotage/i,/Harcèlement/i,/propagande/i])) add(+1, "réseau rebelle local");
+      if(factionId === "militaire" && isActionMatch(actionName, [/Déployer/i,/Patrouille/i,/Arrestations/i,/Sécurisation/i])) add(-1, "zone hostile");
+      if((factionId === "ong" || factionId === "presse") && isActionMatch(actionName, infoOps.concat(mediation))) add(-1, "accès civil risqué");
+    }
+    if(controller === "civil"){
+      if(factionId === "civils" && isActionMatch(actionName, [/Médiation/i,/Organisation de la sécurité locale/i,/Requête/i,/Protection d’infrastructure civile/i,/Coordination d’évacuation/i])) add(+1, "légitimité communautaire");
+      if(factionId === "ong" && isActionMatch(actionName, [/Soutien logistique/i,/Alerte/i,/Observation/i,/Protection civile/i,/Table ronde/i])) add(+1, "appui civil favorable");
+    }
+    if(controller === "ong"){
+      if(factionId === "ong" && isActionMatch(actionName, [/Observation/i,/Soutien logistique/i,/Protection civile/i,/Documentation/i])) add(+1, "couloir humanitaire établi");
+      if(factionId === "presse" && isActionMatch(actionName, [/Reportage/i,/Diffusion/i,/Enquête/i])) add(+1, "visibilité internationale accrue");
+      if(factionId === "rebelle" && isActionMatch(actionName, offensive)) add(-1, "surveillance internationale renforcée");
+    }
+    if(controller === "disputee"){
+      if(isActionMatch(actionName, mediation.concat(infoOps))) add(+1, "zone fluide propice à l’influence");
+      if(factionId === "militaire" && isActionMatch(actionName, [/Déployer/i,/Patrouille/i,/Sécurisation/i])) add(-1, "friction opérationnelle élevée");
+    }
+  }
+
+  if(event){
+    switch(event.id){
+      case "EV1":
+        if(isActionMatch(actionName, movement)) add(-1, "tempête : mobilité terrestre dégradée");
+        break;
+      case "EV2":
+        if(factionId === "presse" && isActionMatch(actionName, infoOps)) add(+1, "renfort médiatique international");
+        if(factionId === "rebelle" && isActionMatch(actionName, [/Manipulation/i,/propagande/i])) add(+1, "fenêtre de narration accrue");
+        break;
+      case "EV3":
+        if(isActionMatch(actionName, [/Enquête/i,/Documentation/i,/Alerte/i,/Médiation/i,/Reportage/i,/Vérification/i])) add(+1, "incident public à forte valeur d’information");
+        break;
+      case "EV4":
+        if(isActionMatch(actionName, [/Soutien logistique/i,/Protection civile/i,/Coordination/i,/Alerte/i])) add(+1, "convoi bloqué : réponse de crise prioritaire");
+        if(factionId === "rebelle" && isActionMatch(actionName, [/sabotage/i,/Harcèlement/i])) add(+1, "blocage exploitable");
+        break;
+      case "EV5":
+        if(isActionMatch(actionName, [/Appui aérien/i])) add(-1, "drone abattu : prudence aérienne");
+        if(isActionMatch(actionName, [/Reportage/i,/Enquête/i,/Documentation/i,/Vérification/i])) add(+1, "controverse exploitable");
+        break;
+      case "EV6":
+        if(isActionMatch(actionName, [/Médiation/i,/Négociation/i,/Manipulation/i,/Interview/i,/Publication/i,/Vérification/i])) add(+1, "rumeur politique exploitable");
+        break;
+      case "EV7":
+        if(isActionMatch(actionName, offensive)) add(-1, "menace de sanctions internationales");
+        if(isActionMatch(actionName, mediation.concat(infoOps))) add(+1, "désescalade et communication favorisées");
+        break;
+      case "EV8":
+        if(zoneId && ["B1","C2","D2"].includes(zoneId) && isActionMatch(actionName, [/Soutien logistique/i,/Protection civile/i,/Alerte/i,/Coordination d’évacuation/i,/Observation/i,/Reportage/i])) add(+1, "épidémie : urgence humanitaire");
+        if(zone?.tags.includes("humanitaire") && isActionMatch(actionName, offensive)) add(-1, "action offensive politiquement coûteuse pendant la crise");
+        break;
+    }
+  }
+
+  auto = Math.max(-3, Math.min(3, auto));
+  if(reasons.length === 0) reasons.push("Aucun modificateur automatique notable.");
+  return {auto, reasons};
+}
+
+
+
+function renderTurnBoard(){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  const wrap = document.getElementById("turnBoard");
+  if(!wrap) return;
+  wrap.innerHTML = "";
+  const allZoneOptions = Object.keys(zonesData)
+    .map(z=>`<option value="${z}">${zonesData[z].title}</option>`)
+    .join("");
+
+  const f = factions.find(x => x.id === state.ui.activeFaction) || factions[0];
+  const s = state.turnSelections[f.id];
+  const actionOptions = f.actions.map(a=>`<option value="${a}">${a}</option>`).join("");
+  const panels = {
+    action1:{title:'Action 1', key:'action1', zoneKey:'zone1', dieKey:'d6_1', rolledKey:'rolled_1', modKey:'mod_1', modeKey:'resMode_1', qualKey:'qual_1', resultTitle:'Résolution action 1', options:`<option value="">—</option>${actionOptions.replace(`value="${s.action1}"`, `value="${s.action1}" selected`)}`},
+    action2:{title:'Action 2', key:'action2', zoneKey:'zone2', dieKey:'d6_2', rolledKey:'rolled_2', modKey:'mod_2', modeKey:'resMode_2', qualKey:'qual_2', resultTitle:'Résolution action 2', options:`<option value="">—</option>${actionOptions.replace(`value="${s.action2}"`, `value="${s.action2}" selected`)}`},
+    reaction:{title:'Réaction libre', key:'reaction', zoneKey:'zoneR', dieKey:'d6_r', rolledKey:'rolled_r', modKey:'mod_r', modeKey:'resMode_r', qualKey:'qual_r', resultTitle:'Résolution réaction', zoneLabel:'Zone / cible spatiale de réaction (optionnelle)', options:`<option value="">—</option><option value="${f.reaction}" ${s.reaction===f.reaction?'selected':''}>${f.reaction}</option>`}
+  };
+  const activePanel = panels[state.ui.activeActionPanel] ? state.ui.activeActionPanel : 'action1';
+  state.ui.activeActionPanel = activePanel;
+  const p = panels[activePanel];
+
+  const autoData = computeAutoModifier(f.id, s[p.key], s[p.zoneKey]);
+  const outcome = s[p.modeKey] === 'dice'
+    ? resolveOutcome(s[p.key], s[p.dieKey], autoData.auto + Number(s[p.modKey] || 0), s[p.rolledKey])
+    : resolveQualitativeOutcome(s[p.key], s[p.qualKey], s[p.modeKey]);
+  const selectedZoneTitle = (zoneId) => zoneId ? zonesData[zoneId].title : '';
+  const summaryChip = (label, value, zone, mode) => `<span class="summary-chip"><b>${label}</b><br>${value || '—'}${zone ? `<br><span class="small muted">${selectedZoneTitle(zone)}</span>` : ''}${value ? `<br><span class="small muted">${modeLabel(mode || 'dice')}</span>` : ''}</span>`;
+
+  wrap.innerHTML = `
+    <div class="faction-card">
+      <h4>${f.name}</h4>
+      <div class="turn-summary">
+        ${summaryChip('Action 1', s.action1, s.zone1, s.resMode_1)}
+        ${summaryChip('Action 2', s.action2, s.zone2, s.resMode_2)}
+        ${summaryChip('Réaction', s.reaction, s.zoneR, s.resMode_r)}
+      </div>
+      <div class="action-tabs">
+        <button class="action-tab-btn ${activePanel==='action1'?'active':''}" onclick="setActiveActionPanel('action1')">Action 1</button>
+        <button class="action-tab-btn ${activePanel==='action2'?'active':''}" onclick="setActiveActionPanel('action2')">Action 2</button>
+        <button class="action-tab-btn ${activePanel==='reaction'?'active':''}" onclick="setActiveActionPanel('reaction')">Réaction</button>
+      </div>
+      <div class="action-panel">
+        <label>${p.title}</label>
+        <select onchange="updateSelection('${f.id}','${p.key}',this.value)">${p.options}</select>
+        <label>${p.zoneLabel || 'Zone / cible spatiale (optionnelle)'}</label>
+        <select onchange="updateSelection('${f.id}','${p.zoneKey}',this.value)">
+          <option value="">Aucune / globale</option>${allZoneOptions.replace(`value="${s[p.zoneKey]}"`, `value="${s[p.zoneKey]}" selected`)}
+        </select>
+        <div class="resolution-grid">
+          <div class="resolution-box">
+            <label>Mode de résolution</label>
+            <select onchange="updateSelection('${f.id}','${p.modeKey}',this.value)">
+              <option value="dice" ${s[p.modeKey]==='dice'?'selected':''}>🎲 Jet de dé</option>
+              <option value="negotiated" ${s[p.modeKey]==='negotiated'?'selected':''}>🤝 Résolution négociée</option>
+              <option value="arbitration" ${s[p.modeKey]==='arbitration'?'selected':''}>🎓 Arbitrage facilitateur</option>
+            </select>
+            <span class="small muted">${modeHelp(s[p.modeKey])}</span>
+          </div>
+          ${s[p.modeKey] === 'dice' ? dieBoxForPanel(f.id, s, p, autoData) : qualitativeBoxForPanel(f.id, s, p)}
+        </div>
+        ${outcome.show ? `<div class="result-box compact-result ${outcome.className}"><b>${p.resultTitle} :</b> ${outcome.label}</div>` : ''}
+      </div>
+      <label>Notes / arbitrage</label>
+      <textarea rows="4" onchange="updateSelection('${f.id}','notes',this.value)">${escapeHtml(s.notes || '')}</textarea>
+    </div>
+  `;
+}
+
+function modeLabel(mode){
+  return {dice:'Jet de dé', negotiated:'Négociée', arbitration:'Arbitrage'}[mode] || mode;
+}
+
+function modeHelp(mode){
+  return {
+    dice:'Utilise le D6 et les modificateurs pour trancher une situation incertaine.',
+    negotiated:'À privilégier quand les acteurs peuvent trouver un accord ou un compromis crédible.',
+    arbitration:'À utiliser quand l’enseignant doit trancher rapidement sans recourir au hasard.'
+  }[mode] || '';
+}
+
+function dieBoxForPanel(factionId, s, panel, autoData){
+  return `
+    <div class="resolution-box">
+      <div class="modifier-strip">
+        <div class="mini-field">
+          <label>D6</label>
+          <input type="text" value="${s[panel.rolledKey] ? s[panel.dieKey] : '—'}" readonly class="readonly-die">
+        </div>
+        <div class="mini-field">
+          <label>Mod. auto</label>
+          <input type="text" value="${autoData.auto>0?'+':''}${autoData.auto}" readonly class="readonly-die">
+        </div>
+        <div class="mini-field">
+          <label>Ajust. manuel</label>
+          <input type="number" min="-3" max="3" value="${s[panel.modKey]}" onchange="updateSelection('${factionId}','${panel.modKey}',parseInt(this.value||0))">
+        </div>
+      </div>
+      <div class="dice-row">
+        <div class="dice-actions"><button type="button" class="dice-btn" onclick="rollDieFor('${factionId}','${panel.dieKey}','${panel.rolledKey}')" ${(!s[panel.key] || s[panel.rolledKey]) ? 'disabled' : ''}>🎲 D6 aléatoire</button></div>
+      </div>
+      <details class="mod-help">
+        <summary>Aide modificateurs</summary>
+        <ul class="mod-lines">${autoData.reasons.map(reason => `<li>${reason}</li>`).join("")}</ul>
+      </details>
+    </div>`;
+}
+
+function qualitativeBoxForPanel(factionId, s, panel){
+  return `
+    <div class="resolution-box">
+      <label>Issue retenue</label>
+      <select class="qual-select" onchange="updateSelection('${factionId}','${panel.qualKey}',this.value)" ${!s[panel.key] ? 'disabled' : ''}>
+        <option value="" ${!s[panel.qualKey]?'selected':''}>—</option>
+        <option value="success" ${s[panel.qualKey]==='success'?'selected':''}>✅ Accord / autorisé</option>
+        <option value="partial" ${s[panel.qualKey]==='partial'?'selected':''}>⚠️ Partiel / sous condition</option>
+        <option value="fail" ${s[panel.qualKey]==='fail'?'selected':''}>❌ Refus / échec</option>
+      </select>
+      <span class="small muted">Consigne le sens de la décision sans lancer de dé. Le détail peut être précisé dans les notes ci-dessous.</span>
+    </div>`;
+}
+
+function resolveOutcome(actionName, d6, mod, rolled){
+  if(!actionName) return {show:false, label:"", className:'neutral'};
+  if(!rolled) return {show:false, label:"", className:'pending'};
+  const roll = Number(d6);
+  const modifier = Number(mod);
+  const total = roll + modifier;
+  const detail = `(${roll}${modifier>=0?'+':''}${modifier} = ${total})`;
+  if(total <= 2) return {show:true, label:`❌ Échec ${detail}`, className:'fail'};
+  if(total <= 4) return {show:true, label:`⚠️ Succès partiel ${detail}`, className:'partial'};
+  return {show:true, label:`✅ Succès complet ${detail}`, className:'success'};
+}
+
+function resolveQualitativeOutcome(actionName, qual, mode){
+  if(!actionName || !qual) return {show:false, label:"", className:'neutral'};
+  const prefix = mode === 'negotiated' ? 'Résolution négociée' : 'Arbitrage';
+  if(qual === 'fail') return {show:true, label:`❌ ${prefix} : refus / échec`, className:'fail'};
+  if(qual === 'partial') return {show:true, label:`⚠️ ${prefix} : accord partiel / sous condition`, className:'partial'};
+  return {show:true, label:`✅ ${prefix} : accord / autorisation`, className:'success'};
+}
+
+function rollDieFor(factionId, dieKey, rolledKey){
+  const s = state.turnSelections[factionId];
+  if(s[rolledKey]) return;
+  s[dieKey] = Math.floor(Math.random() * 6) + 1;
+  s[rolledKey] = true;
+  renderTurnBoard();
+  saveLocalState();
+}
+
+function resetResolutionState(s, suffix){
+  if(suffix === '1'){
+    s.d6_1 = null; s.rolled_1 = false; s.qual_1 = "";
+  } else if(suffix === '2'){
+    s.d6_2 = null; s.rolled_2 = false; s.qual_2 = "";
+  } else {
+    s.d6_r = null; s.rolled_r = false; s.qual_r = "";
+  }
+}
+
+function updateSelection(factionId, key, value){
+  const s = state.turnSelections[factionId];
+
+  if(['mod_1','mod_2','mod_r'].includes(key)){
+    s[key] = Number.isFinite(Number(value)) ? Number(value) : 0;
+  } else {
+    s[key] = value;
+  }
+
+  if(['action1','zone1','resMode_1'].includes(key)){
+    resetResolutionState(s, '1');
+  } else if(['action2','zone2','resMode_2'].includes(key)){
+    resetResolutionState(s, '2');
+  } else if(['reaction','zoneR','resMode_r'].includes(key)){
+    resetResolutionState(s, 'r');
+  }
+
+  renderTurnBoard();
+  renderFactionSummary();
+  saveLocalState();
+}
+
+function clearTurnSelections(){
+  factions.forEach(f => {
+    state.turnSelections[f.id] = {
+      action1:"", zone1:"", resMode_1:"dice", qual_1:"", d6_1:null, mod_1:0, rolled_1:false,
+      action2:"", zone2:"", resMode_2:"dice", qual_2:"", d6_2:null, mod_2:0, rolled_2:false,
+      reaction:"", zoneR:"", resMode_r:"dice", qual_r:"", d6_r:null, mod_r:0, rolled_r:false,
+      notes:""
+    };
+  });
+  document.getElementById("turnNotes").value = "";
+  state.notes = "";
+  renderTurnBoard();
+  renderFactionSummary();
+  saveLocalState();
+}
+
+function finalizeTurn(){
+  state.notes = document.getElementById("turnNotes").value;
+  const snapshot = {
+    turn: state.turn,
+    zones: {...state.zones},
+    eventVisible: state.decks.events.visible,
+    objectiveVisible: state.objectives.visible,
+    turnSelections: JSON.parse(JSON.stringify(state.turnSelections)),
+    notes: state.notes,
+    timestamp: new Date().toLocaleString('fr-BE')
+  };
+  state.history.push(snapshot);
+  renderHistory();
+  saveLocalState();
+  alert(`Tour ${state.turn} enregistré dans l’historique.`);
+}
+
+function nextTurn(){
+  state.notes = document.getElementById("turnNotes").value;
+  if(state.turn < TOTAL_TURNS) state.turn += 1;
+  document.getElementById("currentTurn").textContent = state.turn;
+  clearTurnSelections();
+  state.decks.events.visible = null;
+  state.decks.events.flipped = false;
+  renderDecks();
+  saveLocalState();
+}
+
+function renderHistory(){
+  const panel = document.getElementById("historyPanel");
+  if(state.history.length === 0){
+    panel.className = "muted";
+    panel.textContent = "Aucun tour clôturé pour l’instant.";
+    return;
+  }
+  panel.className = "";
+  panel.innerHTML = state.history.slice().reverse().map(entry => {
+    const eventLine = entry.eventVisible ? `${entry.eventVisible.title}` : `Aucun événement conservé`;
+    const objLine = entry.objectiveVisible ? `${entry.objectiveVisible.id} (${getFactionName(entry.objectiveVisible.faction)})` : `Aucun objectif visible`;
+    const selections = factions.map(f => {
+      const s = entry.turnSelections[f.id];
+      return `<li><b>${f.name}</b> — A1 : ${s.action1 || "—"}${s.zone1 ? ` [${s.zone1}]` : ""} ; A2 : ${s.action2 || "—"}${s.zone2 ? ` [${s.zone2}]` : ""} ; Réaction : ${s.reaction || "—"}${s.zoneR ? ` [${s.zoneR}]` : ""}</li>`;
+    }).join("");
+    return `
+      <div class="log-entry">
+        <b>Tour ${entry.turn}</b> <span class="muted">(${entry.timestamp})</span><br>
+        <div class="small" style="margin-top:6px"><b>Événement :</b> ${eventLine}</div>
+        <div class="small"><b>Objectif visible :</b> ${objLine}</div>
+        <div class="small" style="margin-top:6px"><b>Décisions :</b><ul>${selections}</ul></div>
+        <div class="small"><b>Notes :</b> ${entry.notes ? escapeHtml(entry.notes) : "—"}</div>
+        ${renderSnapshotMiniMap(entry.zones)}
+        <div class="toolbar">
+          <button onclick="restoreSnapshot(${entry.turn})">Restaurer l’état de ce tour</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderSnapshotMiniMap(zones){
+  const order = Object.keys(zonesData);
+  return `<div class="snapshot-grid">` + order.map(z=>{
+    const color = {gouvernement:"#0066cc",rebelle:"#cc0000",civil:"#ffcc00",ong:"#009900",disputee:"#aaaaaa"}[zones[z]];
+    return `<div class="snapshot-cell" title="${z}" style="background:${color}"></div>`;
+  }).join("") + `</div>`;
+}
+
+function restoreSnapshot(turnNumber){
+  const snap = state.history.find(h => h.turn === turnNumber);
+  if(!snap) return;
+  state.turn = snap.turn;
+  state.zones = {...snap.zones};
+  state.turnSelections = JSON.parse(JSON.stringify(snap.turnSelections));
+  state.notes = snap.notes || "";
+  state.decks.events.visible = snap.eventVisible || null;
+  state.objectives.visible = snap.objectiveVisible || null;
+  state.decks.events.flipped = false;
+  state.objectives.flipped = false;
+  document.getElementById("currentTurn").textContent = state.turn;
+  document.getElementById("turnNotes").value = state.notes;
+  renderMap();
+  renderDecks();
+  renderTurnBoard();
+  renderHistory();
+  saveLocalState();
+}
+
+
+function normalizeState(){
+  state.ui = state.ui || {activeFaction:'militaire', activeInfoTab:'cards', activeActionPanel:'action1'};
+  state.ui.activeFaction = state.ui.activeFaction || 'militaire';
+  state.ui.activeInfoTab = state.ui.activeInfoTab || 'cards';
+  state.ui.activeActionPanel = state.ui.activeActionPanel || 'action1';
+  state.turnSelections = state.turnSelections || {};
+  factions.forEach(f => {
+    const current = state.turnSelections[f.id] || {};
+    state.turnSelections[f.id] = {
+      action1: current.action1 || "",
+      zone1: current.zone1 || "",
+      resMode_1: current.resMode_1 || "dice",
+      qual_1: current.qual_1 || "",
+      d6_1: current.d6_1 ?? null,
+      mod_1: Number.isFinite(Number(current.mod_1)) ? Number(current.mod_1) : 0,
+      rolled_1: Boolean(current.rolled_1),
+      action2: current.action2 || "",
+      zone2: current.zone2 || "",
+      resMode_2: current.resMode_2 || "dice",
+      qual_2: current.qual_2 || "",
+      d6_2: current.d6_2 ?? null,
+      mod_2: Number.isFinite(Number(current.mod_2)) ? Number(current.mod_2) : 0,
+      rolled_2: Boolean(current.rolled_2),
+      reaction: current.reaction || "",
+      zoneR: current.zoneR || "",
+      resMode_r: current.resMode_r || "dice",
+      qual_r: current.qual_r || "",
+      d6_r: current.d6_r ?? null,
+      mod_r: Number.isFinite(Number(current.mod_r)) ? Number(current.mod_r) : 0,
+      rolled_r: Boolean(current.rolled_r),
+      notes: current.notes || ""
+    };
+  });
+}
+function saveLocalState(){
+  state.notes = document.getElementById("turnNotes") ? document.getElementById("turnNotes").value : state.notes;
+  localStorage.setItem("novaristan_v12_state", JSON.stringify(state));
+}
+
+function loadLocalState(){
+  const raw = localStorage.getItem("novaristan_v12_state");
+  if(!raw) return false;
+  try{
+    const parsed = JSON.parse(raw);
+    state = parsed;
+    normalizeState();
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function saveToFile(){
+  state.notes = document.getElementById("turnNotes").value;
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `novaristan_v8_tour_${state.turn}.json`;
+  a.click();
+}
+
+function importFromFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      state = JSON.parse(e.target.result);
+      normalizeState();
+      renderAll();
+      saveLocalState();
+    }catch(err){
+      alert("Import impossible : fichier JSON invalide.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+function buildObjectiveFactionSelect(){
+  const sel = document.getElementById("objectiveFactionSelect");
+  sel.innerHTML = factions.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+  sel.onchange = () => renderDecks();
+}
+
+function renderAll(){
+  document.getElementById("currentTurn").textContent = state.turn;
+  buildObjectiveFactionSelect();
+  renderFactionTabs();
+  renderInfoTabs();
+  renderMap();
+  renderDecks();
+  renderTurnBoard();
+  renderHistory();
+  document.getElementById("turnNotes").value = state.notes || "";
+  if(state.selectedZone) showZone(state.selectedZone);
+}
+
+if(!loadLocalState()){
+  initState();
+}
+renderAll();
+</script>
+</body>
+</html>
