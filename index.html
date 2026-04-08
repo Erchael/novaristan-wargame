@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Novaristan – Serious Game v12</title>
+<title>Novaristan – Serious Game</title>
 <style>
   :root{
     --bg:#f4f6f8;
@@ -226,7 +226,7 @@
 </style>
 </head>
 <body>
-<h1>Novaristan – Serious Game v12</h1>
+<h1>Novaristan – Serious Game</h1>
 
 <div class="topbar">
   <div class="pill">Tour en cours : <span id="currentTurn">1</span> / 6</div>
@@ -1269,11 +1269,11 @@ function normalizeState(){
 }
 function saveLocalState(){
   state.notes = document.getElementById("turnNotes") ? document.getElementById("turnNotes").value : state.notes;
-  localStorage.setItem("novaristan_v12_state", JSON.stringify(state));
+  localStorage.setItem("novaristan_state", JSON.stringify(state));
 }
 
 function loadLocalState(){
-  const raw = localStorage.getItem("novaristan_v12_state");
+  const raw = localStorage.getItem("novaristan_state");
   if(!raw) return false;
   try{
     const parsed = JSON.parse(raw);
